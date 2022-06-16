@@ -13,7 +13,7 @@ x = np.arange(20)
 u = np.zeros(20)
 def steadystate(x,k,D,r):
     for j in range(len(x)):
-        u[j] = (k/np.sqrt(4*D*r))**(-1*np.abs(x[j])*np.sqrt(r/D))
+        u[j] = (k/np.sqrt(4*D*r))*(np.e**(-1*np.abs(x[j])*np.sqrt(r/D)))
     return u
 
 uhat = steadystate(x=x,k=100,D=6.45,r=.1)
@@ -24,3 +24,5 @@ ax.plot(x, uhat)
 ax.set(xlabel='x (10^-3 cm)', ylabel='drug concentration (ug/mL)',
        title='Steady State Drug Diffusion w/Constant Source & Reaction')
 ax.grid()
+
+
