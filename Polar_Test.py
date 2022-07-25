@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jun 16 13:49:21 2022
+Created on Mon Jun 20 13:24:24 2022
 
 @author: beckettpierce
 """
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 from seascapes_figures.classes.population_class import Population
 import seascapes_figures
 
 
-x = np.logspace(-2,2,num=1000)
+x = np.logspace(-2,4,num=1000)
 u = np.zeros(1000)
 def steadystate(x,k,D,r):
     for j in range(np.size(x)):
@@ -56,42 +58,22 @@ colors = cc_dict['color']
 
 
 fig, ax = plt.subplots()
-ax.plot(x, uhat,color='k')
 ax.set(xlabel='x (10^-3 cm)', ylabel='drug concentration (ug/mL)',
        title='Steady State Drug Diffusion w/Constant Source & Reaction')
-plt.yscale("log")
+# plt.yscale("log")
 
 #we have list of colors for each thing, where we want each color
 #now need to chop up x & uhat into different arrays based on where there is this optimal conc
 for l in range(np.size(x)):
     if 0 == np.all(most_fit_at_conc == most_fit_at_conc[l]):
         optimal_at_x = most_fit_at_conc[l]
+        no_terminal_counter = 0
         optimal_at_x = int(optimal_at_x)
         color_of_optimal = colors[optimal_at_x]
-        for c in range(np.size(x)):
-            if c+l > (np.size(x)-1):
-                break
-            else:
-                tester = int(most_fit_at_conc[c+l])
-                if optimal_at_x != tester:
-                    terminal_point = c+l-1
-        
-        # if optimal_at_x > 8:
-        #      ax.fill_between(x,0,uhat,color=color_of_optimal)
-        # else:
-        #      ax.fill_between(x,0,uhat,color=color_of_optimal,alpha=.5)
-        ax.fill_between(x[l:terminal_point],0,uhat[l:terminal_point],color = color_of_optimal)
-    else:
-         optimal_at_x = most_fit_at_conc[l]
-         optimal_at_x = int(optimal_at_x)
-         color_of_optimal = colors[optimal_at_x]
-         # if optimal_at_x > 8:
-         #     ax.fill_between(x,0,uhat,color=color_of_optimal)
-         
-         ax.fill_between(x,0,uhat,color=color_of_optimal,alpha=.5)
+        r = np.sqrt((x[l]**2)+uhat[l]**2)
+        circle = plt.Circle((0,0),r,color = colors[optimal_at_x],fill=False)
+        ax.add_patch(circle)
 
-            
-#ax.fill_between(x, 0, uhat)
-plt.show()
-
+ax.set_xlim((-100, 100))
+ax.set_ylim((-100, 100))
 

@@ -22,8 +22,6 @@ uhat =  uhat/np.max(uhat)
 #D in 10^-6 cm^2/s
 fig, ax = plt.subplots()
 ax.plot(x, uhat)
-ax.set(xlabel='x (10^-3 cm)', ylabel='drug concentration (ug/mL)',
+ax.set(xlabel='x (10^-3 cm)', ylabel='drug concentration proportion of max dose',
        title='Steady State Drug Diffusion w/Constant Source & Reaction')
 ax.grid()
-
-
