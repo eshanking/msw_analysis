@@ -38,7 +38,7 @@ options = {    'k_abs':.95,
     'timestep_scale':.25,
     'fitness_data':'estimate',
     'curve_type':'pulsed',
-    'prob_drop':.3
+    'prob_drop':.4
     }
 
 p = Population(**options)
@@ -135,6 +135,7 @@ for l in range(np.size(x)):
          # if optimal_at_x > 8:
          #     ax.fill_between(x,0,uhat,color=color_of_optimal)
          if optimal_at_x > 8:
+
                  ax[0].plot(x,uhat,color=color_of_optimal,alpha=.5,linestyle='--',linewidth=3)
          else:
                  ax[0].plot(x,uhat,color=color_of_optimal,alpha=.5,linewidth=3)
@@ -166,7 +167,7 @@ options = {    'k_abs':.95,
     'timestep_scale':.25,
     'fitness_data':'estimate',
     'curve_type':'pulsed',
-    'prob_drop':.3
+    'prob_drop':.4
     }
 
 p = Population(**options)
@@ -184,7 +185,7 @@ colors = cc_dict['color']
 
 #we have list of colors for each thing, where we want each color
 #now need to chop up x & uhat into different arrays based on where there is this optimal conc
-uhat = uhat/np.max(uhat)
+# uhat = uhat/np.max(uhat)
 for l in range(np.size(x)):
     if 0 == np.all(most_fit_at_conc == most_fit_at_conc[l]):
         if l == 0:
@@ -256,7 +257,7 @@ legend_elements = [Line2D([0], [0], color='blue', lw=2, label='solid',linestyle=
 ax[1].legend(handles=legend_elements, loc='upper right')
         
         
-ax[1].set(xlabel='x (10^-3 cm)', ylabel='% of Max Dose')
+ax[1].set(xlabel='x (10^-3 cm)', ylabel='Drug Concentration (ug/ml)')
 
 
 
