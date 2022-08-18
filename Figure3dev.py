@@ -11,10 +11,12 @@ import matplotlib.pyplot as plt
 from seascapes_figures.classes.population_class import Population
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
+import random
 
 
-
-
+seed = np.random.randint(10000)
+np.random.seed(seed)
+random.seed(seed)
 x = np.arange(100)
 u = np.zeros(100)
 def steadystate(x,k,D,r):
@@ -36,16 +38,21 @@ options = {    'k_abs':.95,
     'max_dose':5,
     'n_timestep':4000,
     'timestep_scale':.25,
-    'fitness_data':'estimate',
+    'fitness_data':'random',
     'curve_type':'pulsed',
-    'prob_drop':.4
+    'prob_drop':.5,
+    'n_allele':2
     }
+
 
 p = Population(**options)
 
 
+# p.ic50 = [-3.78766218, -4.02237296, -5.22221995, -3.09765892]
+# p.drugless_rates = [1.22802236, 1.14399848, 1.28949852, 0.93619847]
+
 x=np.arange(1000)
-u=np.zeros(1000)
+u=np.zeros(4000)
 
 
 #need number/ to find the conc space
@@ -156,6 +163,8 @@ uhat = steadystate(x=x,k=100,D=6.45,r=.1)
 #k in ug/ML
 #D in 10^-6 cm^2/s
 
+np.random.seed(seed)
+random.seed(seed)
 
 #now goal is to look at where conc space dominance and what is dominant where
 most_fit_at_conc = np.zeros(np.size(u))
@@ -165,10 +174,14 @@ options = {    'k_abs':.95,
     'max_dose':5,
     'n_timestep':4000,
     'timestep_scale':.25,
-    'fitness_data':'estimate',
+    'fitness_data':'random',
     'curve_type':'pulsed',
-    'prob_drop':.4
+    'prob_drop':.5,
+    'n_allele':2
     }
+# p.ic50 = [-3.78766218, -4.02237296, -5.22221995, -3.09765892]
+# p.drugless_rates = [1.22802236, 1.14399848, 1.28949852, 0.93619847]
+
 
 p = Population(**options)
 p.plot_fitness_curves()
@@ -258,6 +271,3 @@ ax[1].legend(handles=legend_elements, loc='upper right')
         
         
 ax[1].set(xlabel='x (10^-3 cm)', ylabel='Drug Concentration (ug/ml)')
-
-
-

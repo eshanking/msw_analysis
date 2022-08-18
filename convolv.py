@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jun 20 13:24:24 2022
+Created on Wed Aug  3 15:08:29 2022
 
 @author: beckettpierce
 """
-
 
 import numpy as np
 import matplotlib.pyplot as plt
 from seascapes_figures.classes.population_class import Population
 import seascapes_figures
 import math
-
+import scipy.signal
+import random
 
 xdim = np.linspace(-100,100,num=200)
 ydim = np.linspace(-100,100,num=200)
@@ -28,10 +28,26 @@ for o in range(np.size(xdim)):
 #k in ug/ML
 #D in 10^-6 cm^2/s
 
+delta_array = np.zeros((200,200))
+delta_array[50,100]=1
+delta_array[150,100]=1
+
+
+r= scipy.signal.convolve2d(uhat,delta_array)
+
+convolxdim = np.linspace(-200,200,num=400)
+convolydim = np.linspace(-200,200,num=400)
+tester = np.log(r)
+rep_val = 0
+tester[np.isinf(tester)] = 0
+#plt.imshow(tester, cmap = 'hot')
 
 #now goal is to look at where conc space dominance and what is dominant where
-most_fit_at_conc =np.zeros((np.size(xdim),np.size(xdim)))
-conc_space = uhat
+most_fit_at_conc =np.zeros((np.size(xdim)*2,np.size(xdim)*2))
+conc_space = r
+seed=9345
+np.random.seed(seed)
+random.seed(seed)
 options = {    'k_abs':.95,
     'k_elim':.00839,
     'max_dose':5,
@@ -39,13 +55,14 @@ options = {    'k_abs':.95,
     'timestep_scale':.25,
     'fitness_data':'estimate',
     'curve_type':'pulsed',
-    'prob_drop':.4
+    'prob_drop':.4,
+    'n_allele':2
     }
 
 p = Population(**options)
 p.plot_fitness_curves()
-for z in range(np.size(xdim)):
-    for j in range(np.size(xdim)):
+for z in range(np.size(convolydim)-1):
+    for j in range(np.size(convolydim)-1):
         conc = conc_space[z,j]
         p_fit_list = p.gen_fit_land(conc)
         most_fit_at_conc[z,j] = (np.argmax(p_fit_list))
@@ -63,13 +80,13 @@ ax[1].set(xlabel='x (10^-3 cm)')
 counts = np.zeros(16)
 #we have list of colors for each thing, where we want each color
 #now need to chop up x & uhat into different arrays based on where there is this optimal conc
-for l in range(np.size(xdim)):
-    for w in range(np.size(xdim)):
+for l in range(np.size(convolydim)-1):
+    for w in range(np.size(convolxdim)-1):
             optimal_at_x = most_fit_at_conc[l,w]
             optimal_at_x = int(optimal_at_x)
             counts[optimal_at_x] =   counts[optimal_at_x] + 1
             color_of_optimal = colors[optimal_at_x]
-            ax[1].scatter(xdim[l],ydim[w], color=colors[optimal_at_x])
+            ax[1].scatter(convolxdim[l],convolydim[w], color=colors[optimal_at_x])
 
 
 
@@ -118,7 +135,7 @@ ax[2].set_position(pos)
 
 
 
-ax[0].imshow(uhat,cmap='hot',extent = [-100,100,-100,100])
+ax[0].imshow(tester,cmap='hot',extent = [-200,200,-200,200])
 ax[0].set(xlabel='x (10^-3 cm)', ylabel='y (10^-3 cm)')
 
 
@@ -146,7 +163,7 @@ ax[0].set_position(pos)
 
 
  
-ax[1].set_xlim((-100, 100))
-ax[1].set_ylim((-100, 100))
+ax[1].set_xlim((-200, 200))
+ax[1].set_ylim((-200, 200))
 
 
