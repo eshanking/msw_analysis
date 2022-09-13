@@ -14,7 +14,7 @@ from matplotlib.patches import Patch
 import random
 
 
-seed = np.random.randint(10000)
+seed = 9345
 np.random.seed(seed)
 random.seed(seed)
 x = np.arange(100)
@@ -267,7 +267,8 @@ legend_elements = [Line2D([0], [0], color='blue', lw=2, label='solid',linestyle=
                    Line2D([0], [0],  color='gray',lw=2, label='dot',linestyle='--')]
                           
 # Create the figure
-ax[1].legend(handles=legend_elements, loc='upper right')
-        
-        
+ax[1].legend(handles=legend_elements, loc='upper right',frameon=False)
+
+
+
 ax[1].set(xlabel='x (10^-3 cm)', ylabel='Drug Concentration (ug/ml)')
