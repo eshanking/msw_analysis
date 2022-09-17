@@ -1,205 +1,190 @@
-    #!/usr/bin/env python3
-    # -*- coding: utf-8 -*-
-    """
-    Created on Wed Aug  3 15:08:29 2022
-    
-    @author: beckettpierce
-    """
-    
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from seascapes_figures.classes.population_class import Population
-    import seascapes_figures
-    import math
-    import scipy.signal
-    import random
-    
-    xdim = np.linspace(-100,100,num=200)
-    ydim = np.linspace(-100,100,num=200)
-    uhat = np.zeros((np.size(xdim),np.size(xdim)))
-    def steadystate(x,k,D,r):
-        uhat = (k/np.sqrt(4*D*r))*(np.e**(-1*np.abs(x)*np.sqrt(r/D)))
-        return uhat
-    
-    for o in range(np.size(xdim)):
-        for q in range(np.size(xdim)):
-            uhat[o,q] = steadystate((np.sqrt((xdim[o]**2) + ydim[q]**2)),k=100,D=6.45,r=.1)
-    
-    #k in ug/ML
-    #D in 10^-6 cm^2/s
-    
-    delta_array = np.zeros((200,200))
-    delta_array[50,100]=1
-    delta_array[150,100]=1
-    
-    
-    r= scipy.signal.convolve2d(uhat,delta_array)
-    
-    convolxdim = np.linspace(-200,200,num=400)
-    convolydim = np.linspace(-200,200,num=400)
-    tester = np.log(r)
-    rep_val = 0
-    tester[np.isinf(tester)] = -13.5
-    #plt.imshow(tester, cmap = 'hot')
-    
-    #now goal is to look at where conc space dominance and what is dominant where
-    most_fit_at_conc =np.zeros((np.size(xdim)*2,np.size(xdim)*2))
-    conc_space = r
-    seed=9345
-    np.random.seed(seed)
-    random.seed(seed)
-    options = {    'k_abs':.95,
-        'k_elim':.00839,
-        'max_dose':5,
-        'n_timestep':4000,
-        'timestep_scale':.25,
-        'fitness_data':'random',
-        'curve_type':'pulsed',
-        'prob_drop':.4,
-        'n_allele':2
-        }
-    
-    p = Population(**options)
-    p.plot_fitness_curves()
-    for z in range(np.size(convolydim)-1):
-        for j in range(np.size(convolydim)-1):
-            conc = conc_space[z,j]
-            p_fit_list = p.gen_fit_land(conc)
-            most_fit_at_conc[z,j] = (np.argmax(p_fit_list))
-    ##now most_fit_at_conc is our list of what is most fit at each point, now we must associate colors with each of these
-    cc = p.gen_color_cycler()
-    cc_dict = cc.by_key()
-    colors = cc_dict['color']
-    
-    
-    fig, ax = plt.subplots(1,3,figsize=(15, 7))
-    ax[1].set(xlabel='x (10^-3 cm)')
-    # plt.yscale("log")
-    
-    
-    counts = np.zeros(16)
-    #we have list of colors for each thing, where we want each color
-    #now need to chop up x & uhat into different arrays based on where there is this optimal conc
-    
-    scalar = 20
-    
-    ###need to change this
-    for l in range(int((np.size(convolydim))/scalar)):
-        for w in range(int((np.size(convolxdim))/scalar)):
-                optimal_at_x = most_fit_at_conc[w*scalar,l*scalar]
-                optimal_at_x = int(optimal_at_x)
-                counts[optimal_at_x] =   counts[optimal_at_x] + 1
-                color_of_optimal = colors[optimal_at_x]
-                ax[1].scatter(convolydim[l*scalar],convolxdim[w*scalar], color=colors[optimal_at_x])
-    
-    
-    
-    list = []
-    for i in range(16):
-        if counts[i] != 0:
-            list.append(p.int_to_binary(i))
-        else:
-            list.append("")
-            
-    plotting_list = []
-    counting_list = []
-    list_array = np.array(list)
-    for i in range(16):
-        if list_array[i] != '':
-           plotting_list.append(i)
-        if counts[i] != 0:
-            counting_list.append(counts[i])
-    
-    
-    # bar_list=[(f'{binary[0]}',counts[0]),('{binary[1]}',counts[1]),('{binary[2]}',counts[2]),
-    #           ('{binary[3]}',counts[3]),('{binary[4]}',counts[4]),('{binary[5]}',counts[5]),
-    #           ('{binary[6]}',counts[6]),('{binary[7]}',counts[7]),('{binary[8]}',counts[8]),
-    #           ('{binary[9]}',counts[9]),('{binary[10]}',counts[10]),
-    #           ('{binary[11]}',counts[11],)('{binary[12]}',counts[12]),
-    #           ('{binary[13]}',counts[13])('{binary[14]}',counts[14]),('{binary[15]}',counts[15])]
-    
-    # labels, ys = zip(*bar_list)
-    # xs = np.arange(len(labels)) 
-    # width = 1
-    counts = counts / np.sum(counts)
-    counting_list = counting_list / np.sum(counting_list)
-    
-    keys, values = zip(*sorted(zip(plotting_list,counting_list)))
-    x = range(len(keys))
-    ax[2].bar(x, values, .8, align='center')
-    ax[2].set_xticks(x)
-    ax[2].set(xlabel='Genotype',ylabel='Proportion of Mutant Selection Windows')
-#    ax[2].tick_params(bottom=False)
-    #ax[2].xticks(x, label='')
-    
-    
-    
-    
-    pad = .325
-    pos = ax[2].get_position()
-    pos.y1 = pos.y1-pad
-    ax[2].set_position(pos)
-    
-    pad= .2
-    pos = ax[2].get_position()
-    pos.y0 = pos.y0+pad
-    pos.y1 = pos.y1+pad
-    ax[2].set_position(pos)
-    
-    
-    
-    
-    
-    
-    # ax[2].xticks(xs, labels) #Replace default x-ticks with xs, then replace xs with labels
-    # ax[2].yticks(ys)
-    
-    
-    #locs, labels = ax[2].xticks()
-    
+"""
+Created on Wed Aug  3 15:08:29 2022
 
-    
-    ax[0].imshow(tester,cmap='hot',extent = [-200,200,-200,200])
-    ax[0].set_ylim((-100, 100))
-    ax[0].set_xlim((-100, 100))
+@author: beckettpierce
+"""
+#%%
+import numpy as np
+import matplotlib.pyplot as plt
+from fears.population import Population
+from fears.utils import plotter
+import math
+import scipy.signal
+import random
 
-    ax[0].set(xlabel='x (10^-3 cm)', ylabel='y (10^-3 cm)')
-    
-    
-    
-    pad = .325
-    pos = ax[1].get_position()
-    pos.y1 = pos.y1-pad
-    ax[1].set_position(pos)
-    
-    
-    
-    pad = .2
-    pos = ax[1].get_position()
-    pos.y0 = pos.y0+pad
-    pos.y1 = pos.y1+pad
-    ax[1].set_position(pos)
-    
+def indx_matrix_from_zero(indx,mat):
 
-        
-    
-    # pad = .05
-    # pos = ax[0].get_position()
-    # pos.y1 = pos.y1-pad
-    # ax[0].set_position(pos)
+    ycenter = int(mat.shape[0]/2)
+    xcenter = int(mat.shape[1]/2)
 
-    
-    
-    # pad = .04
-    # pos = ax[0].get_position()
-    # pos.y0 = pos.y0+pad
-    # pos.y1 = pos.y1+pad
-    # ax[0].set_position(pos)
-    
-    
-    
-    
-     
-    ax[1].set_xlim((-100, 100))
-    ax[1].set_ylim((-100, 100))
-    
+    y = indx[0] - ycenter
+    x = indx[1] - xcenter
+    val = mat[int(y),int(x)]
+
+    return val
+
+def steadystate(x,k,D,r):
+    uhat = (k/np.sqrt(4*D*r))*(np.e**(-1*np.abs(x)*np.sqrt(r/D)))
+    return uhat
+
+#%%
+xdim = np.linspace(-100,100,num=200)
+ydim = np.linspace(-100,100,num=200)
+uhat = np.zeros((np.size(xdim),np.size(xdim)))
+
+# Compute steady-state solution in radial coordinates
+for i in range(np.size(xdim)):
+    for j in range(np.size(xdim)):
+        uhat[i,j] = steadystate((np.sqrt((xdim[i]**2) + ydim[j]**2)),k=100,D=6.45,r=.1)
+
+#k in ug/ML
+#D in 10^-6 cm^2/s
+
+# Define impulse matrix (location of vessels)
+delta_array = np.zeros((200,200))
+delta_array[50,100]=1
+delta_array[150,100]=1
+
+# Convolve the steady state solution with the impulse matrix
+r = scipy.signal.convolve2d(uhat,delta_array)
+
+
+convolxdim = np.linspace(-200,200,num=400)
+convolydim = np.linspace(-200,200,num=400)
+
+tester = np.log(r)
+rep_val = 0
+tester[np.isinf(tester)] = -13.5
+#plt.imshow(tester, cmap = 'hot')
+
+#now goal is to look at where conc space dominance and what is dominant where
+most_fit_at_conc = np.zeros((np.size(xdim)*2,np.size(xdim)*2))
+conc_space = r
+# seed=9345
+#%%
+seed = 109
+np.random.seed(seed)
+random.seed(seed)
+
+drug_conc_range = [-4,4]
+p = Population(fitness_data='random',
+               n_allele=2,
+               death_rate=0.1,
+               drug_conc_range = drug_conc_range,
+               ic50_limits=[-2.5,3],
+               drugless_limits=[0.8,1.5])
+
+p.drugless_rates = [1.28949852, 1.14399848, 1.22802236, 0.93619847]
+p.ic50 = [-0.49205992, 1.76224515,  1.39341393,  2.84653598]
+p.plot_fitness_curves()
+#%%
+for z in range(np.size(convolydim)-1):
+    for j in range(np.size(convolydim)-1):
+        conc = conc_space[z,j]
+        p_fit_list = p.gen_fit_land(conc)
+        most_fit_at_conc[z,j] = int((np.argmax(p_fit_list)))
+
+##now most_fit_at_conc is our list of what is most fit at each point, now we must associate colors with each of these
+cc = plotter.gen_color_cycler()
+cc_dict = cc.by_key()
+colors = cc_dict['color']
+
+#%% plotting
+
+fig, ax = plt.subplots(1,3,figsize=(15, 7))
+
+counts = np.zeros(p.n_genotype)
+#we have list of colors for each thing, where we want each color
+#now need to chop up x & uhat into different arrays based on where there is this optimal conc
+
+final_range = (-100,100)
+
+# Get counts only in the range we are plotting
+for l in np.arange(final_range[0],final_range[1]):#range(final_range[1] - final_range[0]):
+    for w in np.arange(final_range[0],final_range[1]):
+            optimal_at_x = int(indx_matrix_from_zero((w,l),most_fit_at_conc))
+            counts[optimal_at_x] =   counts[optimal_at_x] + 1
+
+resolution_scale = 10
+for l in range(int((np.size(convolydim))/resolution_scale)):
+    for w in range(int((np.size(convolxdim))/resolution_scale)):
+            optimal_at_x = most_fit_at_conc[w*resolution_scale,l*resolution_scale]
+            optimal_at_x = int(optimal_at_x)
+            # counts[optimal_at_x] =   counts[optimal_at_x] + 1
+            label = p.int_to_binary(optimal_at_x)
+            color_of_optimal = colors[optimal_at_x]
+            ax[1].scatter(convolydim[l*resolution_scale],
+                          convolxdim[w*resolution_scale], 
+                          color=colors[optimal_at_x],
+                          label=label)
+
+
+counts = counts / np.sum(counts)
+
+x = np.arange(p.n_genotype)
+xlab = [p.int_to_binary(xx) for xx in x]
+ax[2].bar(x, counts, .8, align='center',color='coral')
+ax[2].set_xticks(x)
+ax[2].set_xticklabels(xlab)
+# ax[2].set(xlabel='Genotype',ylabel='Proportion of Mutant Selection Windows')
+ax[2].set_xlabel('Genotype',fontsize=15)
+ax[2].set_ylabel('Proportion',fontsize=15)
+
+# Plot 2D diffision
+im = ax[0].imshow(tester,cmap='hot',extent = [-200,200,-200,200],vmin=-7,vmax=3)
+ax[0].set_ylim((-100, 100))
+ax[0].set_xlim((-100, 100))
+
+ax[0].set_ylabel('y ($10^{-3}$ cm)',fontsize=15)
+ax[0].set_xlabel('x ($10^{-3}$ cm)',fontsize=15)
+ax[1].set_ylabel('y ($10^{-3}$ cm)',fontsize=15)
+ax[1].set_xlabel('x ($10^{-3}$ cm)',fontsize=15)
+
+for a in ax:
+    a.tick_params(axis='both', which='major', labelsize=12)
+
+# Display only this range
+ax[1].set_xlim((-100, 100))
+ax[1].set_ylim((-100, 100))
+
+for a in ax[0:2]:
+    a.set_aspect('equal')
+
+pad = 0.03
+
+# Increase x spacing of axes
+ax[1] = plotter.shiftx(ax[1],pad)
+ax[2] = plotter.shiftx(ax[2],pad*2)
+
+cb = fig.colorbar(im, ax=ax[0],location='bottom')
+cb.ax.tick_params(labelsize=12) 
+cb.set_label('Drug concentration (log(uM))',fontsize=12)
+
+pos0 = ax[0].get_position()
+
+for a in ax[1:]:
+    pos = a.get_position()
+
+    pos.y0 = pos0.y0
+    pos.y1 = pos0.y1
+
+    a.set_position(pos)
+
+# Add legend to middle axes
+handles, labels = ax[1].get_legend_handles_labels()
+
+unique_labels = sorted(set(labels))
+labels = np.array(labels)
+unique_handles = []
+
+for lab in unique_labels:
+    indx = np.argwhere(labels==lab)
+    indx = indx[0][0]
+    unique_handles.append(handles[indx])
+
+ax[1].legend(unique_handles,unique_labels,loc = (0,-0.3),frameon=True,
+             fontsize=12,ncol=4,fancybox=False,framealpha=1,
+             columnspacing=1)
+
+fig.savefig('figures/2d_diffusion_with_hist.pdf',bbox_inches='tight')
+# %%
