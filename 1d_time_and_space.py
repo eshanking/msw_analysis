@@ -67,7 +67,7 @@ def plot_drug_curve(ax,dc,mf,chunks,colors,pop,**kwargs):
 
         most_fit = mf[chunk[0]]
         color = colors[int(most_fit)]
-        l = pop.int_to_binary(n)
+        l = pop.int_to_binary(int(most_fit))
         ax.plot(x,dc_t,color=color,label=l,**kwargs)
         n+=1
     
@@ -117,7 +117,7 @@ ax[0] = plot_drug_curve(ax[0],u,mf,chunks,colors,p,linewidth=2)
 ax[0] = plotter.x_ticks_to_days(p,ax[0])
 
 ax[0].set_xlabel('Time (days)',fontsize=15)
-ax[0].set_ylabel('Drug concentration (uM)',fontsize=15)
+ax[0].set_ylabel('Drug concentration (ug/mL)',fontsize=15)
 # ax[0].set_yscale('log')
 
 #%%
@@ -140,7 +140,7 @@ ax[1] = plot_drug_curve(ax[1],diff,mf,chunks,colors,p,linewidth=5)
 
 # ax[1].set(xlabel='x ($10^{-3}$ cm)', ylabel='Drug Concentration (ug/ml)')
 ax[1].set_xlabel(xlabel='x ($10^{-3}$ cm)',fontsize=15)
-ax[1].set_ylabel(ylabel='Drug Concentration (ug/ml)',fontsize=15)
+ax[1].set_ylabel(ylabel='Drug Concentration (ug/mL)',fontsize=15)
 ax[1].set_yscale('log')
 
 ax[1] = plotter.shiftx(ax[1],0.1)
@@ -159,7 +159,7 @@ for lab in unique_labels:
     indx = indx[0][0]
     unique_handles.append(handles[indx])
 
-ax[1].legend(unique_handles,unique_labels,loc = (-0.1,-0.4),frameon=False,
+ax[1].legend(unique_handles,unique_labels,loc = (-1,-0.4),frameon=False,
              fontsize=12,ncol=4)
 
 fig.savefig('figures/1d_time_and_diff.pdf',bbox_inches='tight')
