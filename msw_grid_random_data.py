@@ -15,7 +15,7 @@ p = Population(fitness_data='random',
 p.drugless_rates = [1.28949852, 1.14399848, 1.22802236, 0.93619847]
 p.ic50 = [-0.49205992, 1.76224515,  1.39341393,  2.84653598]
 
-fig,ax = plt.subplots()
+fig,ax = plt.subplots() 
 
 genotypes = np.array([0,1,2,3])
 ax = plotter.msw_grid(p,genotypes,ax=ax,
@@ -24,6 +24,7 @@ ax = plotter.msw_grid(p,genotypes,ax=ax,
                       comp_annotate_pos=10**-3.5,
                       legendloc=(0,1.05))
 
+ax.set_xlabel('Drug concentration ($\mathrm{\mu}$g/mL)',fontsize=14)
 fig.savefig('figures/2_allele_grid.pdf')
 
 # fig2 = plotter.plot_msw(p,2,ncols=1,figsize=(2.5,4))
