@@ -28,7 +28,7 @@ ax.set_xlabel('Drug concentration ($\mathrm{\mu}$g/mL)',fontsize=14)
 fig.savefig('figures/2_allele_grid.pdf')
 
 # fig2 = plotter.plot_msw(p,2,ncols=1,figsize=(2.5,4))
-fig2, ax = plotter.plot_msw(p,2,ncols=2,figsize=(6,2))
+fig2, ax = plotter.plot_msw(p,0,ncols=2,figsize=(6,2))
 
 for a in ax:
     a.yaxis.tick_right()
