@@ -39,7 +39,7 @@ for a in ax:
 
 fig2.savefig('figures/2_allele_msws.pdf',bbox_inches='tight')
 
-fig3,ax = plt.subplots(figsize=(6,3))
+fig3,ax = plt.subplots(figsize=(5,3))
 
 fig3,ax = plotter.plot_fitness_curves(p,ax=ax,fig=fig3)
 ax.spines['right'].set_visible(False)

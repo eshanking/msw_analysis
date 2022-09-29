@@ -11,6 +11,8 @@ from fears.utils import plotter
 import math
 import scipy.signal
 import random
+# from matplotlib.colors import ListedColormap
+from matplotlib import colors
 
 def indx_matrix_from_zero(indx,mat):
 
@@ -87,8 +89,13 @@ for z in range(np.size(convolydim)-1):
 ##now most_fit_at_conc is our list of what is most fit at each point, now we must associate colors with each of these
 cc = plotter.gen_color_cycler()
 cc_dict = cc.by_key()
-colors = cc_dict['color']
+c = cc_dict['color']
 
+c = c[:int(np.max(most_fit_at_conc))+1]
+
+cmap = colors.ListedColormap(c)
+bounds=[0,1,2,3,4]
+norm = colors.BoundaryNorm(bounds, cmap.N)
 #%% plotting
 
 fig, ax = plt.subplots(1,3,figsize=(15, 7))
@@ -105,19 +112,22 @@ for l in np.arange(final_range[0],final_range[1]):#range(final_range[1] - final_
             optimal_at_x = int(indx_matrix_from_zero((w,l),most_fit_at_conc))
             counts[optimal_at_x] =   counts[optimal_at_x] + 1
 
-resolution_scale = 10
-for l in range(int((np.size(convolydim))/resolution_scale)):
-    for w in range(int((np.size(convolxdim))/resolution_scale)):
-            optimal_at_x = most_fit_at_conc[w*resolution_scale,l*resolution_scale]
-            optimal_at_x = int(optimal_at_x)
-            # counts[optimal_at_x] =   counts[optimal_at_x] + 1
-            label = p.int_to_binary(optimal_at_x)
-            color_of_optimal = colors[optimal_at_x]
-            ax[1].scatter(convolydim[l*resolution_scale],
-                          convolxdim[w*resolution_scale], 
-                          color=colors[optimal_at_x],
-                          label=label)
 
+# resolution_scale = 10
+# for l in range(int((np.size(convolydim))/resolution_scale)):
+#     for w in range(int((np.size(convolxdim))/resolution_scale)):
+#             optimal_at_x = most_fit_at_conc[w*resolution_scale,l*resolution_scale]
+#             optimal_at_x = int(optimal_at_x)
+#             # counts[optimal_at_x] =   counts[optimal_at_x] + 1
+#             label = p.int_to_binary(optimal_at_x)
+#             color_of_optimal = colors[optimal_at_x]
+#             ax[1].scatter(convolydim[l*resolution_scale],
+#                           convolxdim[w*resolution_scale], 
+#                           color=colors[optimal_at_x],
+#                           label=label)
+
+imfit = ax[1].imshow(most_fit_at_conc,cmap=cmap,extent = [-200,200,-200,200],
+                     interpolation='gaussian',interpolation_stage='rgba',norm=norm)
 
 counts = counts / np.sum(counts)
 
@@ -153,12 +163,16 @@ for a in ax[0:2]:
 pad = 0.03
 
 # Increase x spacing of axes
-ax[1] = plotter.shiftx(ax[1],pad)
-ax[2] = plotter.shiftx(ax[2],pad*2)
 
 cb = fig.colorbar(im, ax=ax[0],location='bottom')
 cb.ax.tick_params(labelsize=12) 
-cb.set_label('Drug concentration (log(uM))',fontsize=12)
+cb.set_label('Drug concentration (log(ug/mL))',fontsize=12)
+
+cbfit = fig.colorbar(imfit,ax=ax[1],cmap=cmap,location='bottom',
+    ticks = [0.5,1.5,2.5,3.5])
+
+cbfit.ax.set_xticklabels(['00','01','10','11'])
+cbfit.ax.tick_params(labelsize=12) 
 
 pos0 = ax[0].get_position()
 
@@ -170,21 +184,25 @@ for a in ax[1:]:
 
     a.set_position(pos)
 
+ax[1] = plotter.shiftx(ax[1],pad)
+ax[2] = plotter.shiftx(ax[2],pad*2)
+cbfit.ax = plotter.shiftx(cbfit.ax,pad)
 # Add legend to middle axes
-handles, labels = ax[1].get_legend_handles_labels()
+# handles, labels = ax[1].get_legend_handles_labels()
 
-unique_labels = sorted(set(labels))
-labels = np.array(labels)
-unique_handles = []
+# unique_labels = sorted(set(labels))
+# labels = np.array(labels)
+# unique_handles = []
 
-for lab in unique_labels:
-    indx = np.argwhere(labels==lab)
-    indx = indx[0][0]
-    unique_handles.append(handles[indx])
+# for lab in unique_labels:
+#     indx = np.argwhere(labels==lab)
+#     indx = indx[0][0]
+#     unique_handles.append(handles[indx])
 
-ax[1].legend(unique_handles,unique_labels,loc = (0,-0.3),frameon=True,
-             fontsize=12,ncol=4,fancybox=False,framealpha=1,
-             columnspacing=1)
+# ax[1].legend(unique_handles,unique_labels,loc = (0,-0.3),frameon=True,
+#              fontsize=12,ncol=4,fancybox=False,framealpha=1,
+#              columnspacing=1)
+# ax[1].colorbar()
 
 fig.savefig('figures/2d_diffusion_with_hist.pdf',bbox_inches='tight')
 # %%
