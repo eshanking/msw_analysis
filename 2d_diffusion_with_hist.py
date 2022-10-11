@@ -9,8 +9,7 @@ import matplotlib.pyplot as plt
 from fears.population import Population
 from fears.utils import plotter
 import math
-import scipy.signal
-import random
+import scipy
 # from matplotlib.colors import ListedColormap
 from matplotlib import colors
 
@@ -29,6 +28,12 @@ def steadystate(x,k,D,r):
     uhat = (k/np.sqrt(4*D*r))*(np.e**(-1*np.abs(x)*np.sqrt(r/D)))
     return uhat
 
+def steady_state_v2(x,k,D,r):
+    arg = np.sqrt(x/D)*r
+    uhat = (k/(2*math.pi*D))*scipy.special.kn(0,arg)
+    return uhat
+
+
 #%%
 xdim = np.linspace(-100,100,num=200)
 ydim = np.linspace(-100,100,num=200)
@@ -37,7 +42,9 @@ uhat = np.zeros((np.size(xdim),np.size(xdim)))
 # Compute steady-state solution in radial coordinates
 for i in range(np.size(xdim)):
     for j in range(np.size(xdim)):
-        uhat[i,j] = steadystate((np.sqrt((xdim[i]**2) + ydim[j]**2)),k=100,D=6.45,r=.1)
+        gamma = np.sqrt((xdim[i]**2) + ydim[j]**2)
+        uhat[i,j] = steady_state_v2(gamma,k=100,D=0.5,r=0.2)
+        # uhat[i,j] = steadystate((np.sqrt((xdim[i]**2) + ydim[j]**2)),k=100,D=6.45,r=.1)
 
 #k in ug/ML
 #D in 10^-6 cm^2/s
@@ -66,7 +73,7 @@ conc_space = r
 #%%
 seed = 109
 np.random.seed(seed)
-random.seed(seed)
+# random.seed(seed)
 
 drug_conc_range = [-4,4]
 p = Population(fitness_data='random',
