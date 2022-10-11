@@ -35,37 +35,48 @@ def steady_state_v2(x,k,D,r):
 
 
 #%%
-xdim = np.linspace(-100,100,num=200)
-ydim = np.linspace(-100,100,num=200)
+# xdim = np.linspace(-50,50,num=200)
+# ydim = np.linspace(-50,50,num=200)
+xdim = np.linspace(-200,200)
+ydim = np.linspace(-200,200)
 uhat = np.zeros((np.size(xdim),np.size(xdim)))
 
 # Compute steady-state solution in radial coordinates
 for i in range(np.size(xdim)):
     for j in range(np.size(xdim)):
         gamma = np.sqrt((xdim[i]**2) + ydim[j]**2)
-        uhat[i,j] = steady_state_v2(gamma,k=100,D=0.5,r=0.2)
+        uhat[i,j] = steady_state_v2(gamma,k=100,D=6.45*10**2,r=0.2)
         # uhat[i,j] = steadystate((np.sqrt((xdim[i]**2) + ydim[j]**2)),k=100,D=6.45,r=.1)
 
-#k in ug/ML
+#k in ug/mL
 #D in 10^-6 cm^2/s
-
+# 6.45 x10^-6 cm^2/s = 6.45 x10^2 um^2/s
+#%%
 # Define impulse matrix (location of vessels)
-delta_array = np.zeros((200,200))
-delta_array[50,100]=1
-delta_array[150,100]=1
+delta_array = np.zeros((50,50))
+# delta_array[50,100]=1
+# delta_array[150,100]=1
+# delta_array[100,50] = 1
+# delta_array[100,150] = 1
+delta_array[16,25] = 1
+delta_array[32,25] = 1
 
 # Convolve the steady state solution with the impulse matrix
 r = scipy.signal.convolve2d(uhat,delta_array)
 
 
-convolxdim = np.linspace(-200,200,num=400)
-convolydim = np.linspace(-200,200,num=400)
+# convolxdim = np.linspace(-200,200,num=400)
+# convolydim = np.linspace(-200,200,num=400)
+fig,ax = plt.subplots()
+ax.imshow(r)
+fig.colorbar()
 
-tester = np.log(r)
-rep_val = 0
-tester[np.isinf(tester)] = -13.5
+# tester = np.log(r)
+# rep_val = 0
+# tester[np.isinf(tester)] = -13.5
 #plt.imshow(tester, cmap = 'hot')
 
+#%%
 #now goal is to look at where conc space dominance and what is dominant where
 most_fit_at_conc = np.zeros((np.size(xdim)*2,np.size(xdim)*2))
 conc_space = r
