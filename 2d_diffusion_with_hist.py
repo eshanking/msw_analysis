@@ -4,6 +4,7 @@ Created on Wed Aug  3 15:08:29 2022
 @author: beckettpierce
 """
 #%%
+from termios import VMIN
 import numpy as np
 import matplotlib.pyplot as plt
 from fears.population import Population
@@ -30,51 +31,68 @@ def steadystate(x,k,D,r):
 
 def steady_state_v2(x,k,D,r):
     arg = np.sqrt(x/D)*r
-    uhat = (k/(2*math.pi*D))*scipy.special.kn(0,arg)
+    # uhat = (k/(2*math.pi*D))*scipy.special.kn(0,arg)
+    uhat = k*scipy.special.kn(0,arg)
     return uhat
 
 
 #%%
 # xdim = np.linspace(-50,50,num=200)
 # ydim = np.linspace(-50,50,num=200)
-xdim = np.linspace(-200,200)
-ydim = np.linspace(-200,200)
+s = 50
+n = 200
+
+xdim = np.linspace(-s,s,num=n)
+ydim = np.linspace(-s,s,num=n)
 uhat = np.zeros((np.size(xdim),np.size(xdim)))
 
 # Compute steady-state solution in radial coordinates
 for i in range(np.size(xdim)):
     for j in range(np.size(xdim)):
         gamma = np.sqrt((xdim[i]**2) + ydim[j]**2)
-        uhat[i,j] = steady_state_v2(gamma,k=100,D=6.45*10**2,r=0.2)
+        uhat[i,j] = steady_state_v2(gamma,k=100,D=6.45*10**0,r=2)
         # uhat[i,j] = steadystate((np.sqrt((xdim[i]**2) + ydim[j]**2)),k=100,D=6.45,r=.1)
 
 #k in ug/mL
 #D in 10^-6 cm^2/s
 # 6.45 x10^-6 cm^2/s = 6.45 x10^2 um^2/s
-#%%
+
 # Define impulse matrix (location of vessels)
-delta_array = np.zeros((50,50))
+
+# d = 50
+
+s = 200
+delta_array = np.zeros((s,s))
 # delta_array[50,100]=1
 # delta_array[150,100]=1
 # delta_array[100,50] = 1
 # delta_array[100,150] = 1
-delta_array[16,25] = 1
-delta_array[32,25] = 1
+
+xpos = int(s/2)
+ypos1 = int(3*s/8)
+ypos2 = int(5*s/8)
+
+delta_array[ypos1,xpos] = 1
+delta_array[ypos2,xpos] = 1
 
 # Convolve the steady state solution with the impulse matrix
-r = scipy.signal.convolve2d(uhat,delta_array)
+r = scipy.signal.convolve2d(delta_array,uhat,mode='same')
 
-
-# convolxdim = np.linspace(-200,200,num=400)
-# convolydim = np.linspace(-200,200,num=400)
 fig,ax = plt.subplots()
-ax.imshow(r)
-fig.colorbar()
 
-# tester = np.log(r)
-# rep_val = 0
-# tester[np.isinf(tester)] = -13.5
-#plt.imshow(tester, cmap = 'hot')
+# minr = np.min(r[np.argwhere(r>0)])
+
+r = r[25:175,25:175]
+r = np.log10(r)
+# r[np.isinf(r)] == np.log10(minr)
+
+im = ax.imshow(r,cmap='hot')
+
+# ax = ax_list[0]
+# ax.imshow(uhat,cmap='hot',vmin=vmin,vmax=vmax)
+
+fig.colorbar(im)
+
 
 #%%
 #now goal is to look at where conc space dominance and what is dominant where
@@ -98,8 +116,8 @@ p.drugless_rates = [1.28949852, 1.14399848, 1.22802236, 0.93619847]
 p.ic50 = [-0.49205992, 1.76224515,  1.39341393,  2.84653598]
 p.plot_fitness_curves()
 #%%
-for z in range(np.size(convolydim)-1):
-    for j in range(np.size(convolydim)-1):
+for z in range(conc_space.shape[0]):
+    for j in range(conc_space.shape[1]):
         conc = conc_space[z,j]
         p_fit_list = p.gen_fit_land(conc)
         most_fit_at_conc[z,j] = int((np.argmax(p_fit_list)))
@@ -112,7 +130,7 @@ c = cc_dict['color']
 c = c[:int(np.max(most_fit_at_conc))+1]
 
 cmap = colors.ListedColormap(c)
-bounds=[0,1,2,3,4]
+bounds=[0,1,2,3]
 norm = colors.BoundaryNorm(bounds, cmap.N)
 #%% plotting
 
@@ -159,7 +177,7 @@ ax[2].set_xlabel('Genotype',fontsize=15)
 ax[2].set_ylabel('Proportion',fontsize=15)
 
 # Plot 2D diffision
-im = ax[0].imshow(tester,cmap='hot',extent = [-200,200,-200,200],vmin=-7,vmax=3)
+im = ax[0].imshow(r,cmap='hot',extent = [-200,200,-200,200])
 ax[0].set_ylim((-100, 100))
 ax[0].set_xlim((-100, 100))
 
@@ -172,8 +190,8 @@ for a in ax:
     a.tick_params(axis='both', which='major', labelsize=12)
 
 # Display only this range
-ax[1].set_xlim((-100, 100))
-ax[1].set_ylim((-100, 100))
+# ax[1].set_xlim((-100, 100))
+# ax[1].set_ylim((-100, 100))
 
 for a in ax[0:2]:
     a.set_aspect('equal')
