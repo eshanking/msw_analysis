@@ -96,7 +96,8 @@ fig.colorbar(im)
 
 #%%
 #now goal is to look at where conc space dominance and what is dominant where
-most_fit_at_conc = np.zeros((np.size(xdim)*2,np.size(xdim)*2))
+# most_fit_at_conc = np.zeros((np.size(xdim)*2,np.size(xdim)*2))
+most_fit_at_conc = np.zeros(r.shape)
 conc_space = r
 # seed=9345
 #%%
@@ -116,21 +117,29 @@ p.drugless_rates = [1.28949852, 1.14399848, 1.22802236, 0.93619847]
 p.ic50 = [-0.49205992, 1.76224515,  1.39341393,  2.84653598]
 p.plot_fitness_curves()
 #%%
+# most_fit = []
+# conc_vect = []
+
 for z in range(conc_space.shape[0]):
     for j in range(conc_space.shape[1]):
-        conc = conc_space[z,j]
+        conc = 10**conc_space[z,j]
         p_fit_list = p.gen_fit_land(conc)
         most_fit_at_conc[z,j] = int((np.argmax(p_fit_list)))
+        # most_fit.append(int((np.argmax(p_fit_list))))
+        # conc_vect.append(conc)
+        
 
 ##now most_fit_at_conc is our list of what is most fit at each point, now we must associate colors with each of these
 cc = plotter.gen_color_cycler()
 cc_dict = cc.by_key()
 c = cc_dict['color']
 
-c = c[:int(np.max(most_fit_at_conc))+1]
+indx = list(set(most_fit_at_conc.flatten()))
+indx = [int(i) for i in indx]
+c = [c[i] for i in indx]
 
 cmap = colors.ListedColormap(c)
-bounds=[0,1,2,3]
+bounds=indx
 norm = colors.BoundaryNorm(bounds, cmap.N)
 #%% plotting
 
@@ -140,7 +149,7 @@ counts = np.zeros(p.n_genotype)
 #we have list of colors for each thing, where we want each color
 #now need to chop up x & uhat into different arrays based on where there is this optimal conc
 
-final_range = (-100,100)
+final_range = (-74,74)
 
 # Get counts only in the range we are plotting
 for l in np.arange(final_range[0],final_range[1]):#range(final_range[1] - final_range[0]):
@@ -162,8 +171,11 @@ for l in np.arange(final_range[0],final_range[1]):#range(final_range[1] - final_
 #                           color=colors[optimal_at_x],
 #                           label=label)
 
-imfit = ax[1].imshow(most_fit_at_conc,cmap=cmap,extent = [-200,200,-200,200],
+imfit = ax[1].imshow(most_fit_at_conc,cmap=cmap,extent = [final_range[0],
+                     final_range[1],final_range[0],final_range[1]],
                      interpolation='gaussian',interpolation_stage='rgba',norm=norm)
+
+# imfit = ax[1].imshow(most_fit_at_conc,cmap=cmap,extent = [-200,200,-200,200])
 
 counts = counts / np.sum(counts)
 
@@ -177,9 +189,13 @@ ax[2].set_xlabel('Genotype',fontsize=15)
 ax[2].set_ylabel('Proportion',fontsize=15)
 
 # Plot 2D diffision
-im = ax[0].imshow(r,cmap='hot',extent = [-200,200,-200,200])
-ax[0].set_ylim((-100, 100))
-ax[0].set_xlim((-100, 100))
+im = ax[0].imshow(r,cmap='hot',extent = [final_range[0],final_range[1],
+                  final_range[0],final_range[1]])
+# ax[0].set_ylim((-100, 100))
+# ax[0].set_xlim((-100, 100))
+
+# ax[1].set_ylim((-100, 100))
+# ax[1].set_xlim((-100, 100))
 
 ax[0].set_ylabel('y ($10^{-3}$ cm)',fontsize=15)
 ax[0].set_xlabel('x ($10^{-3}$ cm)',fontsize=15)
