@@ -13,13 +13,16 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 import random
 
-def steadystate(x,k,D,r):
+# def steadystate(x,k,D,r):
 
-    u = np.zeros(len(x))
+#     u = np.zeros(len(x))
 
-    for j in range(len(x)):
-        u[j] = (k/np.sqrt(4*D*r))*(np.e**(-1*np.abs(x[j])*np.sqrt(r/D)))
-    return u
+#     for j in range(len(x)):
+#         u[j] = (k/np.sqrt(4*D*r))*(np.e**(-1*np.abs(x[j])*np.sqrt(r/D)))
+#     return u
+
+def oneD_eqn(umax,x):
+    return umax*np.exp(-x)
 
 def most_fit_at_conc(dc,pop):
     
@@ -58,17 +61,20 @@ def detect_changes(mf):
     
     return chunks
 
-def plot_drug_curve(ax,dc,mf,chunks,colors,pop,**kwargs):
+def plot_drug_curve(ax,dc,mf,chunks,colors,pop,x=None,**kwargs):
     
     n = 0
     for chunk in chunks:
-        x = np.arange(chunk[0],chunk[1])
+        if x is None:
+            x_t = np.arange(chunk[0],chunk[1])
+        else:
+            x_t = x[chunk[0]:chunk[1]]
         dc_t = dc[chunk[0]:chunk[1]]
 
         most_fit = mf[chunk[0]]
         color = colors[int(most_fit)]
         l = pop.int_to_binary(int(most_fit))
-        ax.plot(x,dc_t,color=color,label=l,**kwargs)
+        ax.plot(x_t,dc_t,color=color,label=l,**kwargs)
         n+=1
     
     return ax
@@ -122,24 +128,27 @@ ax[0].set_ylabel('Drug concentration (ug/mL)',fontsize=15)
 
 #%%
 
-x = np.linspace(0,100,num=100)
+x = np.linspace(0,15,num=1000)
 
-diff = steadystate(x=x,k=100,D=6.45,r=.1)
+ic50_ranked = np.sort(p.ic50)
+umax = 10**np.mean((ic50_ranked[-1],ic50_ranked[-2]))
+dc = oneD_eqn(umax,x)
+# diff = steadystate(x=x,k=100,D=6.45,r=.1)
 #k in ug/ML
 #D in 10^-6 cm^2/s
 
 #now goal is to look at where conc space dominance and what is dominant where
 
-mf = most_fit_at_conc(diff,p)
+mf = most_fit_at_conc(dc,p)
 chunks = detect_changes(mf)
 cc = plotter.gen_color_cycler()
 cc_dict = cc.by_key()
 colors = cc_dict['color']
 
-ax[1] = plot_drug_curve(ax[1],diff,mf,chunks,colors,p,linewidth=5)
+ax[1] = plot_drug_curve(ax[1],dc,mf,chunks,colors,p,x=x,linewidth=5)
 
 # ax[1].set(xlabel='x ($10^{-3}$ cm)', ylabel='Drug Concentration (ug/ml)')
-ax[1].set_xlabel(xlabel='x ($10^{-3}$ cm)',fontsize=15)
+ax[1].set_xlabel(xlabel='x (mm)',fontsize=15)
 ax[1].set_ylabel(ylabel='Drug Concentration (ug/mL)',fontsize=15)
 ax[1].set_yscale('log')
 

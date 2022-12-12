@@ -1,15 +1,7 @@
-"""
-Created on Wed Aug  3 15:08:29 2022
-
-@author: beckettpierce
-"""
-#%%
-from termios import VMIN
 import numpy as np
 import matplotlib.pyplot as plt
 from fears.population import Population
 from fears.utils import plotter
-import math
 import scipy
 # from matplotlib.colors import ListedColormap
 from matplotlib import colors
@@ -25,104 +17,99 @@ def indx_matrix_from_zero(indx,mat):
 
     return val
 
-def steadystate(x,k,D,r):
-    uhat = (k/np.sqrt(4*D*r))*(np.e**(-1*np.abs(x)*np.sqrt(r/D)))
-    return uhat
+def twoD_eqn(umax,x,D_vessel=0.01):
 
-def steady_state_v2(x,k,D,r):
-    arg = np.sqrt(x/D)*r
-    # uhat = (k/(2*math.pi*D))*scipy.special.kn(0,arg)
-    uhat = k*scipy.special.kn(0,arg)
-    return uhat
+    if x < D_vessel:
+        u = umax
+    else:
+        u = umax*scipy.special.kn(0,x)
+    return u
 
+#%% Initialize population
+
+seed = 2022
+np.random.seed(seed)
+
+# fig, ax = plt.subplots(1,2,figsize=(8, 3))
+
+options = {'k_abs':.95,
+    'k_elim':.00839,
+    'max_dose':5,
+    'n_timestep':10000,
+    'timestep_scale':0.05,
+    'fitness_data':'random',
+    'curve_type':'pulsed',
+    'prob_drop':.5,
+    'n_allele':2
+    }
+
+drug_conc_range = [-4,4]
+p = Population(
+               death_rate=0.1,
+               drug_conc_range = drug_conc_range,
+               ic50_limits=[-2.5,3],
+               drugless_limits=[0.8,1.5],
+               **options)
+
+p = Population(**options)
+p.drugless_rates = [1.28949852, 1.14399848, 1.22802236, 0.93619847]
+p.ic50 = [-0.49205992, 1.76224515,  1.39341393,  2.84653598]
+
+ic50_rank = np.sort(p.ic50)
+umax = 20
 
 #%%
-# xdim = np.linspace(-50,50,num=200)
-# ydim = np.linspace(-50,50,num=200)
-s = 50
-n = 200
+s = 2 # mm, i.e. a 2 mm patch of tissue
+step = 0.01 # each pixel is 10 um x 10 um
+d_vessel = 0.01 # vessel diameter is 10 um
 
-xdim = np.linspace(-s,s,num=n)
-ydim = np.linspace(-s,s,num=n)
+xdim = np.arange(-s,s,step)
+ydim = np.arange(-s,s,step)
 uhat = np.zeros((np.size(xdim),np.size(xdim)))
+
+u_distances = np.zeros((np.size(xdim),np.size(xdim))) # a matrix of the distance of each pixel from the origin
 
 # Compute steady-state solution in radial coordinates
 for i in range(np.size(xdim)):
     for j in range(np.size(xdim)):
         gamma = np.sqrt((xdim[i]**2) + ydim[j]**2)
-        uhat[i,j] = steady_state_v2(gamma,k=100,D=6.45*10**0,r=2)
+        uhat[i,j] = twoD_eqn(umax, gamma)
+        u_distances[i,j] = gamma
         # uhat[i,j] = steadystate((np.sqrt((xdim[i]**2) + ydim[j]**2)),k=100,D=6.45,r=.1)
 
-#k in ug/mL
-#D in 10^-6 cm^2/s
-# 6.45 x10^-6 cm^2/s = 6.45 x10^2 um^2/s
+uhat = umax*uhat/np.max(uhat) # normalize to umax
 
-# Define impulse matrix (location of vessels)
+uhat[u_distances < d_vessel] = umax # make sure the interior of the vessel is umax
+#%%
 
-# d = 50
+s_d = s
 
-s = 200
-delta_array = np.zeros((s,s))
-# delta_array[50,100]=1
-# delta_array[150,100]=1
-# delta_array[100,50] = 1
-# delta_array[100,150] = 1
+delta_array = np.zeros((np.size(xdim),np.size(xdim)))
 
-xpos = int(s/2)
-ypos1 = int(3*s/8)
-ypos2 = int(5*s/8)
-
-delta_array[ypos1,xpos] = 1
-delta_array[ypos2,xpos] = 1
+delta_array[150,200] = 1
+delta_array[250,200] = 1
 
 # Convolve the steady state solution with the impulse matrix
-r = scipy.signal.convolve2d(delta_array,uhat,mode='same')
+conv = scipy.signal.convolve2d(delta_array,uhat,mode='same')#,mode='same',boundary='wrap')
 
+conv = conv[:,1:]
+log10_conv = np.log10(conv)
+#%%
 fig,ax = plt.subplots()
 
-# minr = np.min(r[np.argwhere(r>0)])
-
-r = r[25:175,25:175]
-r = np.log10(r)
-# r[np.isinf(r)] == np.log10(minr)
-
-im = ax.imshow(r,cmap='hot')
-
-# ax = ax_list[0]
-# ax.imshow(uhat,cmap='hot',vmin=vmin,vmax=vmax)
-
+im = ax.imshow(log10_conv,extent=[-s_d,s_d,-s_d,s_d],cmap='hot')
+# im = ax.imshow(log10_conv)
 fig.colorbar(im)
 
 
 #%%
 #now goal is to look at where conc space dominance and what is dominant where
-# most_fit_at_conc = np.zeros((np.size(xdim)*2,np.size(xdim)*2))
-most_fit_at_conc = np.zeros(r.shape)
-conc_space = r
-# seed=9345
-#%%
-seed = 109
-np.random.seed(seed)
-# random.seed(seed)
 
-drug_conc_range = [-4,4]
-p = Population(fitness_data='random',
-               n_allele=2,
-               death_rate=0.1,
-               drug_conc_range = drug_conc_range,
-               ic50_limits=[-2.5,3],
-               drugless_limits=[0.8,1.5])
+most_fit_at_conc = np.zeros(log10_conv.shape)
 
-p.drugless_rates = [1.28949852, 1.14399848, 1.22802236, 0.93619847]
-p.ic50 = [-0.49205992, 1.76224515,  1.39341393,  2.84653598]
-p.plot_fitness_curves()
-#%%
-# most_fit = []
-# conc_vect = []
-
-for z in range(conc_space.shape[0]):
-    for j in range(conc_space.shape[1]):
-        conc = 10**conc_space[z,j]
+for z in range(log10_conv.shape[0]):
+    for j in range(log10_conv.shape[1]):
+        conc = 10**log10_conv[z,j]
         p_fit_list = p.gen_fit_land(conc)
         most_fit_at_conc[z,j] = int((np.argmax(p_fit_list)))
         # most_fit.append(int((np.argmax(p_fit_list))))
@@ -149,31 +136,17 @@ counts = np.zeros(p.n_genotype)
 #we have list of colors for each thing, where we want each color
 #now need to chop up x & uhat into different arrays based on where there is this optimal conc
 
-final_range = (-74,74)
+final_range_y = (-150,150)
+final_range_x = (-200,200)
 
 # Get counts only in the range we are plotting
-for l in np.arange(final_range[0],final_range[1]):#range(final_range[1] - final_range[0]):
-    for w in np.arange(final_range[0],final_range[1]):
+for l in np.arange(final_range_x[0],final_range_x[1]):#range(final_range[1] - final_range[0]):
+    for w in np.arange(final_range_y[0],final_range_y[1]):
             optimal_at_x = int(indx_matrix_from_zero((w,l),most_fit_at_conc))
             counts[optimal_at_x] =   counts[optimal_at_x] + 1
 
-
-# resolution_scale = 10
-# for l in range(int((np.size(convolydim))/resolution_scale)):
-#     for w in range(int((np.size(convolxdim))/resolution_scale)):
-#             optimal_at_x = most_fit_at_conc[w*resolution_scale,l*resolution_scale]
-#             optimal_at_x = int(optimal_at_x)
-#             # counts[optimal_at_x] =   counts[optimal_at_x] + 1
-#             label = p.int_to_binary(optimal_at_x)
-#             color_of_optimal = colors[optimal_at_x]
-#             ax[1].scatter(convolydim[l*resolution_scale],
-#                           convolxdim[w*resolution_scale], 
-#                           color=colors[optimal_at_x],
-#                           label=label)
-
-imfit = ax[1].imshow(most_fit_at_conc,cmap=cmap,extent = [final_range[0],
-                     final_range[1],final_range[0],final_range[1]],
-                     interpolation='gaussian',interpolation_stage='rgba',norm=norm)
+imfit = ax[1].imshow(most_fit_at_conc,cmap=cmap,extent = [-s_d,s_d,-s_d,s_d],
+                     interpolation='gaussian',interpolation_stage='rgba')
 
 # imfit = ax[1].imshow(most_fit_at_conc,cmap=cmap,extent = [-200,200,-200,200])
 
@@ -189,18 +162,17 @@ ax[2].set_xlabel('Genotype',fontsize=15)
 ax[2].set_ylabel('Proportion',fontsize=15)
 
 # Plot 2D diffision
-im = ax[0].imshow(r,cmap='hot',extent = [final_range[0],final_range[1],
-                  final_range[0],final_range[1]])
+im = ax[0].imshow(log10_conv,cmap='hot',extent = [-s_d,s_d,-s_d,s_d])
 # ax[0].set_ylim((-100, 100))
 # ax[0].set_xlim((-100, 100))
 
 # ax[1].set_ylim((-100, 100))
 # ax[1].set_xlim((-100, 100))
 
-ax[0].set_ylabel('y ($10^{-3}$ cm)',fontsize=15)
-ax[0].set_xlabel('x ($10^{-3}$ cm)',fontsize=15)
-ax[1].set_ylabel('y ($10^{-3}$ cm)',fontsize=15)
-ax[1].set_xlabel('x ($10^{-3}$ cm)',fontsize=15)
+ax[0].set_ylabel('y (mm)',fontsize=15)
+ax[0].set_xlabel('x (mm)',fontsize=15)
+ax[1].set_ylabel('y (mm)',fontsize=15)
+ax[1].set_xlabel('x (mm)',fontsize=15)
 
 for a in ax:
     a.tick_params(axis='both', which='major', labelsize=12)
@@ -239,22 +211,9 @@ for a in ax[1:]:
 ax[1] = plotter.shiftx(ax[1],pad)
 ax[2] = plotter.shiftx(ax[2],pad*2)
 cbfit.ax = plotter.shiftx(cbfit.ax,pad)
-# Add legend to middle axes
-# handles, labels = ax[1].get_legend_handles_labels()
 
-# unique_labels = sorted(set(labels))
-# labels = np.array(labels)
-# unique_handles = []
-
-# for lab in unique_labels:
-#     indx = np.argwhere(labels==lab)
-#     indx = indx[0][0]
-#     unique_handles.append(handles[indx])
-
-# ax[1].legend(unique_handles,unique_labels,loc = (0,-0.3),frameon=True,
-#              fontsize=12,ncol=4,fancybox=False,framealpha=1,
-#              columnspacing=1)
-# ax[1].colorbar()
+ax[0].set_ylim(-1.5,1.5)
+ax[1].set_ylim(-1.5,1.5)
 
 fig.savefig('figures/2d_diffusion_with_hist.pdf',bbox_inches='tight')
 # %%
