@@ -30,9 +30,11 @@ fig.savefig('figures/2_allele_grid.pdf')
 # fig2 = plotter.plot_msw(p,2,ncols=1,figsize=(2.5,4))
 fig2, ax = plotter.plot_msw(p,0,ncols=2,figsize=(6,2))
 
-for a in ax:
-    a.yaxis.tick_right()
-
+# for a in ax:
+#     a.yaxis.tick_right()
+ax[0].set_ylabel('Replication rate ($hr^{-1}$)',fontsize=14)
+ax[0].yaxis.set_label_position("left")
+ax[1].set_ylabel('')
 fig2.savefig('figures/2_allele_msws.pdf',bbox_inches='tight')
 
 fig3,ax = plt.subplots(figsize=(5,3))

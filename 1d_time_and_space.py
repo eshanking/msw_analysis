@@ -1,10 +1,4 @@
 #%%
-"""
-Created on Thu Jul 14 13:30:19 2022
-
-@author: beckettpierce
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 from fears.population import Population
@@ -123,7 +117,7 @@ ax[0] = plot_drug_curve(ax[0],u,mf,chunks,colors,p,linewidth=2)
 ax[0] = plotter.x_ticks_to_days(p,ax[0])
 
 ax[0].set_xlabel('Time (days)',fontsize=15)
-ax[0].set_ylabel('Drug concentration (ug/mL)',fontsize=15)
+ax[0].set_ylabel('Drug concentration ($\mu$g/mL)',fontsize=15)
 # ax[0].set_yscale('log')
 
 #%%
@@ -149,7 +143,7 @@ ax[1] = plot_drug_curve(ax[1],dc,mf,chunks,colors,p,x=x,linewidth=5)
 
 # ax[1].set(xlabel='x ($10^{-3}$ cm)', ylabel='Drug Concentration (ug/ml)')
 ax[1].set_xlabel(xlabel='x (mm)',fontsize=15)
-ax[1].set_ylabel(ylabel='Drug Concentration (ug/mL)',fontsize=15)
+ax[1].set_ylabel(ylabel='Drug Concentration ($\mu$g/mL)',fontsize=15)
 ax[1].set_yscale('log')
 
 ax[1] = plotter.shiftx(ax[1],0.1)
@@ -172,3 +166,4 @@ ax[1].legend(unique_handles,unique_labels,loc = (-1,-0.4),frameon=False,
              fontsize=12,ncol=4)
 
 fig.savefig('figures/1d_time_and_diff.pdf',bbox_inches='tight')
+# %%

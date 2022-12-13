@@ -1,3 +1,4 @@
+#%%
 import numpy as np
 import matplotlib.pyplot as plt
 from fears.population import Population
@@ -61,7 +62,7 @@ umax = 20
 #%%
 s = 2 # mm, i.e. a 2 mm patch of tissue
 step = 0.01 # each pixel is 10 um x 10 um
-d_vessel = 0.01 # vessel diameter is 10 um
+D_vessel = 0.01 # vessel diameter is 10 um
 
 xdim = np.arange(-s,s,step)
 ydim = np.arange(-s,s,step)
@@ -73,7 +74,7 @@ u_distances = np.zeros((np.size(xdim),np.size(xdim))) # a matrix of the distance
 for i in range(np.size(xdim)):
     for j in range(np.size(xdim)):
         gamma = np.sqrt((xdim[i]**2) + ydim[j]**2)
-        uhat[i,j] = twoD_eqn(umax, gamma)
+        uhat[i,j] = twoD_eqn(umax, gamma,D_vessel=D_vessel)
         u_distances[i,j] = gamma
         # uhat[i,j] = steadystate((np.sqrt((xdim[i]**2) + ydim[j]**2)),k=100,D=6.45,r=.1)
 
@@ -86,18 +87,18 @@ s_d = s
 
 delta_array = np.zeros((np.size(xdim),np.size(xdim)))
 
-delta_array[150,200] = 1
-delta_array[250,200] = 1
+delta_array[200,160] = 1
+delta_array[200,240] = 1
 
 # Convolve the steady state solution with the impulse matrix
 conv = scipy.signal.convolve2d(delta_array,uhat,mode='same')#,mode='same',boundary='wrap')
 
-conv = conv[:,1:]
+conv = conv[1:,:] # weird boundary conditions
 log10_conv = np.log10(conv)
 #%%
 fig,ax = plt.subplots()
 
-im = ax.imshow(log10_conv,extent=[-s_d,s_d,-s_d,s_d],cmap='hot')
+im = ax.imshow(log10_conv,extent=[-s_d,s_d,-s_d,s_d])
 # im = ax.imshow(log10_conv)
 fig.colorbar(im)
 
@@ -136,8 +137,9 @@ counts = np.zeros(p.n_genotype)
 #we have list of colors for each thing, where we want each color
 #now need to chop up x & uhat into different arrays based on where there is this optimal conc
 
-final_range_y = (-150,150)
-final_range_x = (-200,200)
+
+final_range_x = (-150,150)
+final_range_y = (-200,200)
 
 # Get counts only in the range we are plotting
 for l in np.arange(final_range_x[0],final_range_x[1]):#range(final_range[1] - final_range[0]):
@@ -162,7 +164,7 @@ ax[2].set_xlabel('Genotype',fontsize=15)
 ax[2].set_ylabel('Proportion',fontsize=15)
 
 # Plot 2D diffision
-im = ax[0].imshow(log10_conv,cmap='hot',extent = [-s_d,s_d,-s_d,s_d])
+im = ax[0].imshow(log10_conv,cmap='inferno',extent = [-s_d,s_d,-s_d,s_d])
 # ax[0].set_ylim((-100, 100))
 # ax[0].set_xlim((-100, 100))
 
@@ -190,13 +192,18 @@ pad = 0.03
 
 cb = fig.colorbar(im, ax=ax[0],location='bottom')
 cb.ax.tick_params(labelsize=12) 
-cb.set_label('Drug concentration (log(ug/mL))',fontsize=12)
+cb.set_label('Drug concentration (log($\mu$g/mL))',fontsize=12)
 
 cbfit = fig.colorbar(imfit,ax=ax[1],cmap=cmap,location='bottom',
-    ticks = [0.5,1.5,2.5,3.5])
+    ticks = [1.3,2,2.7])
 
-cbfit.ax.set_xticklabels(['00','01','10','11'])
+cbfit.ax.set_xticklabels(['01','10','11'])
 cbfit.ax.tick_params(labelsize=12) 
+
+cbfit.set_label('Genotype',fontsize=12)
+
+ax[0].set_xlim(-1.5,1.5)
+ax[1].set_xlim(-1.5,1.5)
 
 pos0 = ax[0].get_position()
 
@@ -208,12 +215,9 @@ for a in ax[1:]:
 
     a.set_position(pos)
 
-ax[1] = plotter.shiftx(ax[1],pad)
-ax[2] = plotter.shiftx(ax[2],pad*2)
-cbfit.ax = plotter.shiftx(cbfit.ax,pad)
-
-ax[0].set_ylim(-1.5,1.5)
-ax[1].set_ylim(-1.5,1.5)
+# ax[1] = plotter.shiftx(ax[1],pad)
+# ax[2] = plotter.shiftx(ax[2],pad*2)
+# cbfit.ax = plotter.shiftx(cbfit.ax,pad)
 
 fig.savefig('figures/2d_diffusion_with_hist.pdf',bbox_inches='tight')
 # %%
