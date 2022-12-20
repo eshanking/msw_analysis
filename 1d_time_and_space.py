@@ -108,7 +108,7 @@ u = p.drug_curve
 
 mf = most_fit_at_conc(u,p)
 chunks = detect_changes(mf)
-cc = plotter.gen_color_cycler()
+cc = plotter.gen_color_cycler(style='solid',n_colors=4,palette='colorblind')
 cc_dict = cc.by_key()
 colors = cc_dict['color']
 
@@ -135,9 +135,6 @@ dc = oneD_eqn(umax,x)
 
 mf = most_fit_at_conc(dc,p)
 chunks = detect_changes(mf)
-cc = plotter.gen_color_cycler()
-cc_dict = cc.by_key()
-colors = cc_dict['color']
 
 ax[1] = plot_drug_curve(ax[1],dc,mf,chunks,colors,p,x=x,linewidth=5)
 

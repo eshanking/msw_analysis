@@ -80,7 +80,7 @@ for i in range(np.size(xdim)):
 
 uhat = umax*uhat/np.max(uhat) # normalize to umax
 
-uhat[u_distances < d_vessel] = umax # make sure the interior of the vessel is umax
+uhat[u_distances < D_vessel] = umax # make sure the interior of the vessel is umax
 #%%
 
 s_d = s
@@ -118,7 +118,7 @@ for z in range(log10_conv.shape[0]):
         
 
 ##now most_fit_at_conc is our list of what is most fit at each point, now we must associate colors with each of these
-cc = plotter.gen_color_cycler()
+cc = plotter.gen_color_cycler(style='solid',n_colors=4,palette='colorblind')
 cc_dict = cc.by_key()
 c = cc_dict['color']
 
