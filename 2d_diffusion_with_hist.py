@@ -414,8 +414,8 @@ ax_list[1,1].set_position(pos)
 #shift lower row down
 
 pos = ax_list[1,1].get_position()
-pos.y0 = pos.y0 - 0.1
-pos.y1 = pos.y1 - 0.1
+pos.y0 = pos.y0 - 0.07
+pos.y1 = pos.y1 - 0.07
 
 ax_list[1,1].set_position(pos)
 
@@ -425,5 +425,15 @@ pos_t.y1 = pos.y1
 ax_list[1,0].set_position(pos_t)
 
 # adjust colorbars
+
+cb_pos = cb.ax.get_position()
+h = cb_pos.height
+cb_pos.y0 = pos_t.y0 - 0.15
+cb_pos.y1 = cb_pos.y0 + h
+
+cb.ax.set_position(cb_pos)
+
+
+fig.savefig('figures/1d_2d_combined.pdf',bbox_inches='tight')
 
 # %%
