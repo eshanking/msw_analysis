@@ -134,7 +134,7 @@ bounds=indx
 norm = colors.BoundaryNorm(bounds, cmap.N)
 #%% plotting
 
-fig, ax_list = plt.subplots(2,2,figsize=(8, 8))
+fig, ax_list = plt.subplots(2,2,figsize=(8, 6))
 
 counts = np.zeros(p.n_genotype)
 #we have list of colors for each thing, where we want each color
