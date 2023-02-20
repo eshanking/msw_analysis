@@ -26,7 +26,7 @@ ax = plotter.msw_grid(p,genotypes,ax=ax,
                       legendloc=(0,0.95))
 
 ax.set_xlabel('Drug concentration ($\mathrm{\mu}$g/mL)',fontsize=14)
-fig.savefig('figures/2_allele_grid.pdf')
+fig.savefig('figures/2_allele_grid.png',bbox_inches='tight',dpi=400)
 #%%
 # fig2 = plotter.plot_msw(p,2,ncols=1,figsize=(2.5,4))
 fig2, ax = plotter.plot_msw(p,0,ncols=2,figsize=(6,2))
@@ -36,7 +36,7 @@ fig2, ax = plotter.plot_msw(p,0,ncols=2,figsize=(6,2))
 ax[0].set_ylabel('Replication rate ($hr^{-1}$)',fontsize=14)
 ax[0].yaxis.set_label_position("left")
 ax[1].set_ylabel('')
-fig2.savefig('figures/2_allele_msws.pdf',bbox_inches='tight')
+fig2.savefig('figures/2_allele_msws.png',bbox_inches='tight',dpi=400)
 
 fig3,ax = plt.subplots(figsize=(5,3))
 
@@ -47,5 +47,5 @@ fig3,ax = plotter.plot_fitness_curves(p,ax=ax,fig=fig3,
 ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
 ax.legend(loc='best',frameon=False,fontsize=14)
-fig3.savefig('figures/random_seascape.pdf')
+fig3.savefig('figures/random_seascape.png',bbox_inches='tight',dpi=400)
 # %%

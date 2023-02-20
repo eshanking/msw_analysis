@@ -393,7 +393,7 @@ for lab in unique_labels:
     indx = indx[0][0]
     unique_handles.append(handles[indx])
 
-ax[1].legend(unique_handles,unique_labels,loc = (-1,-0.4),frameon=False,
+ax[1].legend(unique_handles,unique_labels,loc = (-1,-0.5),frameon=False,
              fontsize=12,ncol=4)
 
 # fig.savefig('figures/1d_time_and_diff.pdf',bbox_inches='tight')
@@ -414,8 +414,8 @@ ax_list[1,1].set_position(pos)
 #shift lower row down
 
 pos = ax_list[1,1].get_position()
-pos.y0 = pos.y0 - 0.07
-pos.y1 = pos.y1 - 0.07
+pos.y0 = pos.y0 - 0.15
+pos.y1 = pos.y1 - 0.15
 
 ax_list[1,1].set_position(pos)
 
@@ -432,6 +432,16 @@ cb_pos.y0 = pos_t.y0 - 0.15
 cb_pos.y1 = cb_pos.y0 + h
 
 cb.ax.set_position(cb_pos)
+
+labels = ['A','B','C','D']
+indx = 0
+
+al = np.reshape(ax_list,4)
+
+for ax in al:
+
+    ax.annotate(labels[indx],(0,1.05),xycoords='axes fraction',fontsize=15)
+    indx += 1
 
 
 fig.savefig('figures/1d_2d_combined.pdf',bbox_inches='tight')
