@@ -58,7 +58,7 @@ p.drugless_rates = [1.28949852, 1.14399848, 1.22802236, 0.93619847]
 p.ic50 = [-0.49205992, 1.76224515,  1.39341393,  2.84653598]
 
 ic50_rank = np.sort(p.ic50)
-umax = 20
+umax = 15
 
 #%%
 s = 2 # mm, i.e. a 2 mm patch of tissue
@@ -75,7 +75,7 @@ u_distances = np.zeros((np.size(xdim),np.size(xdim))) # a matrix of the distance
 for i in range(np.size(xdim)):
     for j in range(np.size(xdim)):
         gamma = np.sqrt((xdim[i]**2) + ydim[j]**2)
-        uhat[i,j] = twoD_eqn(umax, gamma,D_vessel=D_vessel)
+        uhat[i,j] = twoD_eqn(umax,gamma,D_vessel=D_vessel)
         u_distances[i,j] = gamma
         # uhat[i,j] = steadystate((np.sqrt((xdim[i]**2) + ydim[j]**2)),k=100,D=6.45,r=.1)
 
@@ -180,10 +180,10 @@ im = ax[0].imshow(log10_conv,cmap='inferno',extent = [-s_d,s_d,-s_d,s_d])
 # ax[1].set_ylim((-100, 100))
 # ax[1].set_xlim((-100, 100))
 
-ax[0].set_ylabel('y (mm)',fontsize=15)
-ax[0].set_xlabel('x (mm)',fontsize=15)
-ax[1].set_ylabel('y (mm)',fontsize=15)
-ax[1].set_xlabel('x (mm)',fontsize=15)
+ax[0].set_ylabel('y (mm)',fontsize=13)
+ax[0].set_xlabel('x (mm)',fontsize=13)
+ax[1].set_ylabel('y (mm)',fontsize=13)
+ax[1].set_xlabel('x (mm)',fontsize=13)
 
 for a in ax:
     a.tick_params(axis='both', which='major', labelsize=14)
@@ -200,7 +200,7 @@ for a in ax:
 
 cb = fig.colorbar(im, ax=ax_list[1,0],location='bottom',pad=0.2)
 cb.ax.tick_params(labelsize=12) 
-cb.set_label('Drug concentration (log($\mu$g/mL))',fontsize=14)
+cb.set_label('Drug concentration (log($\mu$g/mL))',fontsize=13)
 
 # cbfit = fig.colorbar(imfit,ax=ax[1],cmap=cmap,location='bottom',
 #     ticks = [1.3,2,2.7],pad=0.1)
@@ -304,6 +304,23 @@ def plot_drug_curve(ax,dc,mf,chunks,colors,pop,x=None,**kwargs):
     
     return ax
 
+def plot_msw_vspan(ax,mf,chunks,colors,pop,x=None,**kwargs):
+    
+    n = 0
+    for chunk in chunks:
+        if x is None:
+            x_t = np.arange(chunk[0],chunk[1])
+        else:
+            x_t = x[chunk[0]:chunk[1]]
+
+        most_fit = mf[chunk[0]]
+        color = colors[int(most_fit)]
+        l = pop.int_to_binary(int(most_fit))
+        ax.axvspan(x_t[0],x_t[-1],color=color,label=l,**kwargs)
+        n+=1
+    
+    return ax
+
 #%%
 # seed = 2022
 # np.random.seed(seed)
@@ -346,12 +363,12 @@ cc = plotter.gen_color_cycler(style='solid',n_colors=4,palette='colorblind')
 cc_dict = cc.by_key()
 colors = cc_dict['color']
 
-ax[0] = plot_drug_curve(ax[0],u,mf,chunks,colors,p,linewidth=2)
+ax[0] = plot_drug_curve(ax[0],u,mf,chunks,colors,p,linewidth=4)
 
 ax[0] = plotter.x_ticks_to_days(p,ax[0])
 
 ax[0].set_xlabel('Time (days)',fontsize=15)
-ax[0].set_ylabel('Drug concentration ($\mu$g/mL)',fontsize=15)
+ax[0].set_ylabel('Drug concentration ($\mu$g/mL)',fontsize=13)
 # ax[0].set_yscale('log')
 
 #%%
@@ -370,11 +387,12 @@ dc = oneD_eqn(umax,x)
 mf = most_fit_at_conc(dc,p)
 chunks = detect_changes(mf)
 
-ax[1] = plot_drug_curve(ax[1],dc,mf,chunks,colors,p,x=x,linewidth=5)
+ax[1] = plot_msw_vspan(ax[1],mf,chunks,colors,p,x=x,linewidth=5)
+ax[1].plot(x,dc,linewidth=6,color='black')
 
 # ax[1].set(xlabel='x ($10^{-3}$ cm)', ylabel='Drug Concentration (ug/ml)')
 ax[1].set_xlabel(xlabel='x (mm)',fontsize=15)
-ax[1].set_ylabel(ylabel='Drug Concentration ($\mu$g/mL)',fontsize=15)
+ax[1].set_ylabel(ylabel='Drug Concentration ($\mu$g/mL)',fontsize=13)
 ax[1].set_yscale('log')
 
 ax[1] = plotter.shiftx(ax[1],0.1)
@@ -411,11 +429,22 @@ pos.x0 = pos1.x0
 pos.x1 = pos1.x1
 ax_list[1,1].set_position(pos)
 
+# shift right column to the left
+pos = ax_list[1,1].get_position()
+pos.x0 = pos.x0 - 0.04
+pos.x1 = pos.x1 - 0.04
+ax_list[1,1].set_position(pos)
+
+pos = ax_list[0,1].get_position()
+pos.x0 = pos.x0 - 0.04
+pos.x1 = pos.x1 - 0.04
+ax_list[0,1].set_position(pos)
+
 #shift lower row down
 
 pos = ax_list[1,1].get_position()
-pos.y0 = pos.y0 - 0.15
-pos.y1 = pos.y1 - 0.15
+pos.y0 = pos.y0 - 0.18
+pos.y1 = pos.y1 - 0.18
 
 ax_list[1,1].set_position(pos)
 

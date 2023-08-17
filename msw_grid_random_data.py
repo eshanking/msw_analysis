@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 np.random.seed(109)
 drug_conc_range = [-3,5]
 p = Population(fitness_data='random',
+               death_model=None,
                n_allele=2,
                death_rate=0.1,
                drug_conc_range = drug_conc_range,
@@ -44,6 +45,20 @@ fig3,ax = plotter.plot_fitness_curves(p,ax=ax,fig=fig3,
                                       color_kwargs={'style':'solid',
                                                     'n_colors':4,
                                                     'palette':'colorblind'})
+vert_lines_ydata = [0,1.3]
+
+ax,lax1 = plotter.add_landscape_to_fitness_curve(10**-2,ax,p,square=True,
+                                                 ypos=0.3,colorbar=False,
+                                                 vert_lines_ydata=vert_lines_ydata,
+                                                 vert_lines_kwargs={'linewidth':2},
+                                                 textsize=15)
+
+ax,lax2 = plotter.add_landscape_to_fitness_curve(10**2,ax,p,square=True,
+                                                 ypos=0.3,colorbar=True,
+                                                 vert_lines_ydata=vert_lines_ydata,
+                                                 vert_lines_kwargs={'linewidth':2},
+                                                 cbloc=[0.8,0.22,0.3,0.5],textsize=15)
+
 ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
 ax.legend(loc='best',frameon=False,fontsize=14)

@@ -73,6 +73,23 @@ def plot_drug_curve(ax,dc,mf,chunks,colors,pop,x=None,**kwargs):
     
     return ax
 
+def plot_msw_vspan(ax,mf,chunks,colors,pop,x=None,**kwargs):
+    
+    n = 0
+    for chunk in chunks:
+        if x is None:
+            x_t = np.arange(chunk[0],chunk[1])
+        else:
+            x_t = x[chunk[0]:chunk[1]]
+
+        most_fit = mf[chunk[0]]
+        color = colors[int(most_fit)]
+        l = pop.int_to_binary(int(most_fit))
+        ax.axvspan(x_t[0],x_t[-1],color=color,label=l,**kwargs)
+        n+=1
+    
+    return ax
+
 #%%
 seed = 2022
 np.random.seed(seed)
@@ -80,15 +97,16 @@ random.seed(seed)
 
 fig, ax = plt.subplots(1,2,figsize=(8, 3))
 
-options = {'k_abs':.95,
-    'k_elim':.00839,
-    'max_dose':5,
-    'n_timestep':10000,
-    'timestep_scale':0.05,
-    'fitness_data':'random',
-    'curve_type':'pulsed',
-    'prob_drop':.5,
-    'n_allele':2
+options = {'death_model':None,
+           'k_abs':.95,
+            'k_elim':.00839,
+            'max_dose':5,
+            'n_timestep':10000,
+            'timestep_scale':0.05,
+            'fitness_data':'random',
+            'curve_type':'pulsed',
+            'prob_drop':.5,
+            'n_allele':2
     }
 
 drug_conc_range = [-4,4]
@@ -112,7 +130,7 @@ cc = plotter.gen_color_cycler(style='solid',n_colors=4,palette='colorblind')
 cc_dict = cc.by_key()
 colors = cc_dict['color']
 
-ax[0] = plot_drug_curve(ax[0],u,mf,chunks,colors,p,linewidth=2)
+ax[0] = plot_drug_curve(ax[0],u,mf,chunks,colors,p,linewidth=4)
 
 ax[0] = plotter.x_ticks_to_days(p,ax[0])
 
@@ -136,7 +154,8 @@ dc = oneD_eqn(umax,x)
 mf = most_fit_at_conc(dc,p)
 chunks = detect_changes(mf)
 
-ax[1] = plot_drug_curve(ax[1],dc,mf,chunks,colors,p,x=x,linewidth=5)
+ax[1] = plot_msw_vspan(ax[1],mf,chunks,colors,p,x=x,linewidth=5)
+ax[1].plot(x,dc,linewidth=6,color='black')
 
 # ax[1].set(xlabel='x ($10^{-3}$ cm)', ylabel='Drug Concentration (ug/ml)')
 ax[1].set_xlabel(xlabel='x (mm)',fontsize=15)
@@ -159,8 +178,44 @@ for lab in unique_labels:
     indx = indx[0][0]
     unique_handles.append(handles[indx])
 
-ax[1].legend(unique_handles,unique_labels,loc = (-1,-0.4),frameon=False,
+ax[1].legend(unique_handles,unique_labels,loc = (-1,-0.45),frameon=False,
              fontsize=12,ncol=4)
 
-fig.savefig('figures/1d_time_and_diff.pdf',bbox_inches='tight')
+fig.savefig('figures/1d_time_and_diff.png',bbox_inches='tight')
+# %%
+plotter.plot_msw(p,0,figsize=(7,3))
+# %%
+
+def log_eqn(g,ic50,conc):
+    hc = -.5
+    res = []
+    for c in conc:
+        res.append(g/(1+np.exp((ic50-np.log10(c))/hc)))
+    return res
+
+conc = np.logspace(-3,3)
+
+ic50_1 = -1.5
+ic50_2 = 1.5
+
+g1 = 1.1
+g2 = 0.8
+
+f1 = log_eqn(g1,ic50_1,conc)
+f2 = log_eqn(g2,ic50_2,conc)
+
+fig,ax = plt.subplots(figsize=(5,3.5))
+
+ax.plot(conc,f1,color='black',linewidth=3,label='sensitive')
+ax.plot(conc,f2,color='red',linewidth=3,label='resistant')
+ax.set_xscale('log')
+ax.tick_params(axis='both', which='major', labelsize=12)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+ax.set_xlabel('Drug concentration (ug/mL)',fontsize=14)
+ax.set_ylabel('Growth rate',fontsize=14)
+ax.legend(fontsize=11,frameon=False)
+
+fig.savefig('ex_msw.pdf',bbox_inches='tight')
 # %%
