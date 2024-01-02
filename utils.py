@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats
 import re
+import scipy.optimize as sciopt
 
 def est_linear_slope(counts,
                     # dt=1, # per hour
@@ -166,6 +167,8 @@ def plot_plate(data,plot_fit=False,
                     fit_t = np.e**fit_t
                     ax.plot(time,fit_t,'--',color='black',alpha=0.7)
 
+                    ax.annotate(str(round(fit[0]*10,2)),xy=(0.05,0.8),xycoords='axes fraction',fontsize=8)
+
             if label_well:
                 ax.set_title(key)
 
@@ -191,3 +194,18 @@ def natural_keys(text):
     (See Toothy's implementation in the comments)
     '''
     return [ atoi(c) for c in re.split(r'(\d+)', text) ]
+
+def hill_fn(conc,gmax, gmin, hc, ic_50):
+    
+    y = gmax + ((gmin - gmax) * conc**hc) / (ic_50**hc + conc**hc)
+    return y
+
+def est_dr_params(dc,gr,sigma=None):
+    gmax_est = np.max(gr)
+    gmin_est = np.min(gr)
+    hc_est = 1
+    ic_50_est = np.median(dc)
+    p0 = [gmax_est,gmin_est,hc_est,ic_50_est]
+    popt,pcov = sciopt.curve_fit(hill_fn,dc,gr,p0=p0,
+                            maxfev=10000,sigma=sigma)
+    return popt,pcov
