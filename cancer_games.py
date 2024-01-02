@@ -27,8 +27,11 @@ class CancerGame:
                  mutant_linear_fit=False,
                  single_plate=False,
                  dt=4,
-                 growth_rate_type='logistic'):
-        
+                 growth_rate_type='logistic',
+                 use_sigma=True):
+
+        self.use_sigma = use_sigma
+
         if green_key is None:
             self.green_key = 'Count_gfp_objects'
         else:
@@ -42,6 +45,7 @@ class CancerGame:
         self.smooth_counts = smooth_counts
         self.rolling_average_window = rolling_average_window
         self.folder_path = folder_path
+        
         if single_plate is False:
             self.plate_paths = self.get_plate_paths()
         else:
@@ -205,7 +209,7 @@ class CancerGame:
         if data is None:
             data = self.data_list[plate_num]
 
-        fig,ax_list = plt.subplots(nrows=6,ncols=9,figsize=(12,8),
+        fig,ax_list = plt.subplots(nrows=6,ncols=10,figsize=(12,8),
                                    sharex=True,sharey=True)
 
         fig.tight_layout()
@@ -228,21 +232,23 @@ class CancerGame:
                 red_data = data[key]['red']
                 ax.plot(time,np.log(green_data),color='tab:cyan',linewidth=2.5)
                 ax.plot(time,np.log(red_data),color='tab:brown',linewidth=2.5)
+
+                ax.annotate(key,xy=(0.1,0.8),xycoords='axes fraction')
                 if plot_fit:
 
-                    if np.max(green_data) > 10**3:
-                        fit = self.est_linear_slope(green_data,return_fit=True,**self.slope_est_options)
-                        
-                        if type(fit) == tuple:
-                            fit_t = time*fit[0] + fit[1]
-                            ax.plot(time,fit_t,color='black',alpha=0.9)
+                    # if np.max(green_data) > 10**3:
+                    fit = self.est_linear_slope(green_data,return_fit=True,**self.slope_est_options)
+                    
+                    if type(fit) == tuple:
+                        fit_t = time*fit[0] + fit[1]
+                        ax.plot(time,fit_t,color='black',alpha=0.9)
 
-                    if np.max(red_data) > 10**3:
-                        fit = self.est_linear_slope(red_data,return_fit=True,**self.slope_est_options)
-                        
-                        if type(fit) == tuple:
-                            fit_t = time*fit[0] + fit[1]
-                            ax.plot(time,fit_t,'--',color='black',alpha=0.9)
+                    # if np.max(red_data) > 10**3:
+                    fit = self.est_linear_slope(red_data,return_fit=True,**self.slope_est_options)
+                    
+                    if type(fit) == tuple:
+                        fit_t = time*fit[0] + fit[1]
+                        ax.plot(time,fit_t,'--',color='black',alpha=0.9)
                     # if not np.isnan(fit):
                     #     ax.plot(time,fit,color='black')
                     # fit = self.est_linear_slope(red_data,return_fit=True)
@@ -314,7 +320,7 @@ class CancerGame:
             counts = np.array(counts)
 
         if time is None:
-            time = np.arange(len(counts))
+            time = np.arange(len(counts))*dt
 
         # remove zero values
         time = np.delete(time,np.argwhere(counts<=0))
@@ -371,16 +377,16 @@ class CancerGame:
         count_fit = time_t*fit.slope + fit.intercept
         
         if return_fit:
-            return (fit.slope/dt,fit.intercept)
+            return (fit.slope,fit.intercept)
 
         if np.isnan(slope):
             # raise Warning('Slope is NaN, adjust parameters')
             return slope
 
         if self.growth_rate_type == 'linear':
-            rate = np.exp(slope/dt)
+            rate = np.exp(slope)
         else:
-            rate = slope/dt
+            rate = slope
 
         # plot the linear regression
         if debug:
@@ -597,10 +603,11 @@ class CancerGame:
                 dict_t_parental = {'avg': fitness_avg_parental, 'err': fitness_err_parental}
                 fitness_parent_avg[prop] = dict_t_parental
 
+
         return fitness_res_avg, fitness_parent_avg
 
 
-    def plot_dose_response_curves(self,gr_parent=None,gr_res=None):
+    def plot_dose_response_curves(self,gr_parent=None,gr_res=None,ylim=None):
         
         cmap = mpl.colormaps['viridis']
         
@@ -693,6 +700,10 @@ class CancerGame:
 
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
+
+        if ylim is not None:
+            ax_list[0].set_ylim(ylim)
+            ax_list[1].set_ylim(ylim)
 
         return fig,ax
     
@@ -1117,31 +1128,52 @@ class CancerGame:
             fig.suptitle(which + ' game fit',fontsize=14,y=1.02)
         return fig,ax_list
 
-    def fit_dr_fn(self,which='mutant',debug=False,mutant_frac=None):
+    def fit_dr_fn(self,data=None,dc=None,which='mutant',debug=False,mutant_frac=None,use_sigma=None):
 
-        if which == 'mutant':
-            if mutant_frac is None:
-                mutant_frac = 1
-            data = self.fitness_resistant
-            gr_0 = data[mutant_frac]['avg']
-            err = data[mutant_frac]['err']
 
-            if self.mutant_linear_fit:
-                linear_fit = True
-            else:
-                linear_fit = False
+        if dc is None:
+            dc = self.dc
 
-        elif which == 'parental':
-            if mutant_frac is None:
-                mutant_frac = 0
-            data = self.fitness_parental
-            gr_0 = data[mutant_frac]['avg']
-            err = data[mutant_frac]['err']
+        if use_sigma is None:
+            use_sigma = self.use_sigma
 
-            if self.parental_linear_fit:
-                linear_fit = True
-            else:
-                linear_fit = False
+        if data is None:
+            if which == 'mutant':
+                if mutant_frac is None:
+                    mutant_frac = 1
+                data = self.fitness_resistant
+                gr_0 = data[mutant_frac]['avg']
+                err = data[mutant_frac]['err']
+
+                if self.mutant_linear_fit:
+                    linear_fit = True
+                else:
+                    linear_fit = False
+
+            elif which == 'parental':
+                if mutant_frac is None:
+                    mutant_frac = 0
+                data = self.fitness_parental
+                gr_0 = data[mutant_frac]['avg']
+                err = data[mutant_frac]['err']
+
+                if self.parental_linear_fit:
+                    linear_fit = True
+                else:
+                    linear_fit = False
+        else:
+            gr_0 = data['avg']
+            err = data['err']
+            if which == 'mutant':
+                if self.mutant_linear_fit:
+                    linear_fit = True
+                else:
+                    linear_fit = False
+            elif which == 'parental':
+                if self.parental_linear_fit:
+                    linear_fit = True
+                else:
+                    linear_fit = False
         
         if not linear_fit:
             gmax_est= np.max(gr_0)
@@ -1149,8 +1181,13 @@ class CancerGame:
             hc_est = 1
             ic_50_est = 1
             p0 = [gmax_est,gmin_est,hc_est,ic_50_est]
-            popt,pcov = sciopt.curve_fit(self.hill_fn,self.dc,gr_0,p0=p0,sigma=err,
-                                        maxfev=10000)
+            if use_sigma:
+                sigma = err
+            else:
+                sigma = None
+
+            popt,pcov = sciopt.curve_fit(self.hill_fn,dc,gr_0,p0=p0,
+                                        maxfev=10000,sigma=sigma)
             # check if the values are reasonable
             
             # if popt[0] < popt[1]:
@@ -1162,12 +1199,12 @@ class CancerGame:
         
         if linear_fit:
             # log-linear fit to data
-            res,pcov = sciopt.curve_fit(self.linear_fn,self.dc,gr_0,sigma=err,
+            res,pcov = sciopt.curve_fit(self.linear_fn,dc,gr_0,sigma=err,
                             maxfev=10000)
             popt = [res[0],res[1],0,0]
 
         if debug:
-            xfit = np.logspace(np.min(self.dc),np.max(self.dc),100)
+            xfit = np.logspace(np.min(dc),np.max(dc),100)
             # xfit = np.logspace(np.log10(np.min(self.dc)),np.log10(np.max(self.dc)),100)
             # xfit = np.lin
             if linear_fit:
@@ -1177,7 +1214,7 @@ class CancerGame:
                 
             fig,ax = plt.subplots()
             ax.plot(xfit,yfit)
-            ax.errorbar(self.dc,gr_0,yerr=err,fmt='o')
+            ax.errorbar(dc,gr_0,yerr=err,fmt='o')
             ax.set_xscale('log')
             ax.set_title(which + ' fit,' + ' mutant prop = ' + str(mutant_frac))
             # annotate estimated params with legend trick
