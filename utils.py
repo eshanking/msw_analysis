@@ -167,7 +167,7 @@ def plot_plate(data,plot_fit=False,
                     fit_t = np.e**fit_t
                     ax.plot(time,fit_t,'--',color='black',alpha=0.7)
 
-                    ax.annotate(str(round(fit[0]*10,2)),xy=(0.05,0.8),xycoords='axes fraction',fontsize=8)
+                    ax.annotate(str(round(fit[0]*10,2)),xy=(0.05,0.8),xycoords='axes fraction',fontsize=10)
 
             if label_well:
                 ax.set_title(key)
